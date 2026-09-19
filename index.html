@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>固定費まるみえシート</title>
+<style>
+  :root {
+    --ink: #1d2733; --sub: #5b6b7c; --line: #dfe5ec; --bg: #f5f7fa; --card: #fff;
+    --main: #0f6e6e; --main-soft: #e3f3f2; --accent: #d9662b; --accent-soft: #fdeee5;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 60px; }
+  header h1 { font-size: 26px; margin: 8px 0 4px; letter-spacing: .02em; }
+  header p { margin: 0; color: var(--sub); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-top: 18px; }
+  .card h2 { font-size: 18px; margin: 0 0 4px; }
+  .card .hint { color: var(--sub); font-size: 13px; margin: 0 0 12px; }
+  .step { display: inline-block; background: var(--main); color: #fff; border-radius: 999px;
+    font-size: 12px; padding: 1px 10px; margin-right: 8px; vertical-align: 2px; }
+  select, input[type=text], input[type=number] {
+    font: inherit; color: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: #fff; width: 100%; min-width: 0; }
+  input[type=number] { text-align: right; }
+  select:focus, input:focus { outline: 2px solid var(--main); outline-offset: 0; border-color: var(--main); }
+  .row { display: grid; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
+  .row.cost { grid-template-columns: 1.1fr 1.4fr 1fr .7fr auto auto; }
+  .row.work { grid-template-columns: 2fr .8fr .8fr 1fr auto; }
+  .row.head { border-top: 0; color: var(--sub); font-size: 12px; padding-bottom: 0; }
+  .row .flag { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--sub); white-space: nowrap; }
+  .row .calc { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: #fff; padding: 8px 14px; color: var(--ink); }
+  button.add { border-color: var(--main); color: var(--main); font-weight: 600; margin-top: 10px; }
+  button.del { padding: 6px 10px; color: var(--sub); }
+  button.primary { background: var(--main); border-color: var(--main); color: #fff; font-weight: 600; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .stat { border-radius: 10px; padding: 14px; background: var(--main-soft); }
+  .stat.accent { background: var(--accent-soft); }
+  .stat .label { font-size: 12px; color: var(--sub); }
+  .stat .num { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.3; }
+  .stat .num small { font-size: 13px; font-weight: 500; margin-left: 2px; }
+  .stat .sub { font-size: 13px; color: var(--sub); }
+  .stat.accent .num { color: var(--accent); }
+  .bars { margin-top: 16px; }
+  .bar { display: grid; grid-template-columns: 150px 1fr 110px; gap: 10px; align-items: center; font-size: 13px; padding: 3px 0; }
+  .bar .track { background: var(--bg); border-radius: 999px; height: 12px; overflow: hidden; }
+  .bar .fill { background: var(--main); height: 100%; border-radius: 999px; }
+  .bar .amt { text-align: right; font-variant-numeric: tabular-nums; }
+  .f { display: block; min-width: 0; }
+  .f > span { display: none; font-size: 11px; color: var(--sub); }
+  .diag-start { text-align: center; padding: 6px 0 2px; }
+  .diag-start button { font-size: 17px; padding: 14px 26px; background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .verdict { border-radius: 12px; background: var(--accent-soft); padding: 18px; text-align: center; }
+  .verdict .label { font-size: 13px; color: var(--sub); }
+  .verdict .big { font-size: 34px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.3; }
+  .verdict .big small { font-size: 15px; font-weight: 600; }
+  .verdict .rank { display: inline-block; margin-top: 6px; background: var(--accent); color: #fff; border-radius: 999px; padding: 2px 14px; font-size: 13px; font-weight: 700; }
+  .verdict .time { margin-top: 6px; font-size: 14px; }
+  table.bd { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 14px; }
+  table.bd td { padding: 7px 4px; border-top: 1px dashed var(--line); }
+  table.bd td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.bd tr.total td { border-top: 2px solid var(--ink); font-weight: 700; }
+  .fee { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--sub); }
+  .fee input { width: 120px; }
+  .prio { margin: 14px 0 0; padding: 0; list-style: none; counter-reset: p; }
+  .prio li { counter-increment: p; border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 12px 46px; margin-top: 8px; position: relative; }
+  .prio li::before { content: counter(p); position: absolute; left: 12px; top: 12px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--main); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .prio .t { font-weight: 700; } .prio .s { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .prio .d { font-size: 13px; color: var(--sub); }
+  .keep { margin-top: 14px; font-size: 13px; color: var(--sub); }
+  h3 { font-size: 15px; margin: 20px 0 0; }
+  .note { font-size: 12px; color: var(--sub); margin-top: 12px; }
+  footer { margin-top: 24px; font-size: 12px; color: var(--sub); text-align: center; }
+  @media (max-width: 720px) {
+    .row.cost { grid-template-columns: 1fr 1fr; }
+    .row.work { grid-template-columns: 1fr 1fr; }
+    .row.head { display: none; }
+    .row .calc { text-align: left; }
+    .f > span { display: block; }
+    .verdict .big { font-size: 25px; white-space: nowrap; }
+    .verdict .rank { border-radius: 12px; }
+    .summary { grid-template-columns: 1fr; }
+    .bar { grid-template-columns: 96px 1fr 92px; }
+  }
+  @media print {
+    body { background: #fff; } .toolbar, button, .diag-start { display: none !important; }
+    .card { break-inside: avoid; border-color: #bbb; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>固定費まるみえシート <span class="step" style="background:var(--sub);vertical-align:6px">試作版</span></h1>
+    <p>毎月「何もしなくても出ていくお金」と「手作業にかかっているお金」を、3分で見える化します。</p>
+  </header>
+
+  <section class="card">
+    <h2><span class="step">STEP 1</span>業種を選ぶ</h2>
+    <p class="hint">よくある固定費の項目が自動で入ります。あとから自由に足したり消したりできます。</p>
+    <select id="industry" aria-label="業種"></select>
+  </section>
+
+  <section class="card">
+    <h2><span class="step">STEP 2</span>固定費を入れる</h2>
+    <p class="hint">だいたいの金額で大丈夫です。年払いのものは「年」を選ぶと月額に直して計算します。</p>
+    <div class="row cost head"><div>分類</div><div>項目</div><div>金額（円）</div><div>支払い</div><div>見直し候補</div><div></div></div>
+    <div id="costRows"></div>
+    <button class="add" id="addCost" type="button">＋ 固定費を追加</button>
+  </section>
+
+  <section class="card">
+    <h2><span class="step">STEP 3</span>毎月くり返している手作業を入れる</h2>
+    <p class="hint">請求書づくり、予約の転記、在庫の確認、報告書…。社長ご自身の作業なら、時給はご自身の時間単価で。</p>
+    <div class="row work head"><div>作業の内容</div><div>月の時間</div><div>時給（円）</div><div>月あたり</div><div></div></div>
+    <div id="workRows"></div>
+    <button class="add" id="addWork" type="button">＋ 手作業を追加</button>
+  </section>
+
+  <section class="card">
+    <h2>結果</h2>
+    <div class="summary">
+      <div class="stat"><div class="label">固定費</div><div class="num" id="sCostM">0<small>円/月</small></div><div class="sub" id="sCostY">年間 0円</div></div>
+      <div class="stat"><div class="label">手作業にかかっているお金</div><div class="num" id="sWorkM">0<small>円/月</small></div><div class="sub" id="sWorkY">年間 0円（月0時間）</div></div>
+      <div class="stat accent"><div class="label">見直しを検討できる範囲</div><div class="num" id="sRevY">0<small>円/年</small></div><div class="sub" id="sRevM">月あたり 0円</div></div>
+    </div>
+    <div class="bars" id="bars"></div>
+    <p class="note">「見直しを検討できる範囲」＝ 見直し候補にチェックした固定費 ＋ 手作業のコスト の合計です。
+      全額が削減できるという意味ではありません。どれくらい抑えられそうかは、下の「AI活用診断」で試算できます。</p>
+  </section>
+
+  <section class="card" id="diagCard">
+    <h2><span class="step">STEP 4</span>AI活用診断</h2>
+    <p class="hint">入力した内容から、AI（自社専用ツールの内製・自動化）でどれくらい抑えられそうかを試算します。</p>
+    <div class="diag-start" id="diagStart"><button id="runDiag" type="button">AIでどれだけ抑えられるか診断する</button></div>
+    <div id="diagResult" hidden>
+      <div class="verdict">
+        <div class="label">AI活用で見込める削減額（年間・AI利用料を差し引いた目安）</div>
+        <div class="big" id="dNet"></div>
+        <div class="rank" id="dRank"></div>
+        <div class="time" id="dTime"></div>
+      </div>
+      <table class="bd"><tbody id="dBreakdown"></tbody></table>
+      <div class="fee"><label for="aiFee">AIの利用料（月額の想定）</label>
+        <input id="aiFee" type="number" min="0" step="100" inputmode="numeric"><span>円 ― ご利用のプランに合わせて変更できます</span></div>
+      <h3>どこから手をつけるか（効果の大きい順）</h3>
+      <ol class="prio" id="dPrio"></ol>
+      <div class="keep" id="dKeep"></div>
+      <p class="note">この診断は、項目ごとに「控えめ〜うまくいった場合」の削減割合を仮定して計算した<strong>目安</strong>です。
+        実際の効果は、業務の中身・データの持ち方・使っているサービスによって変わります。
+        正確な見込みは、実際の業務を拝見したうえで個別にお出しします。</p>
+      <div class="toolbar" id="ctaBar" hidden><a id="cta" target="_blank" rel="noopener"><button class="primary" type="button">この結果をもとに個別相談を予約する</button></a></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button class="primary" id="print" type="button">印刷／PDFで保存</button>
+    <button id="reset" type="button">入力をすべて消す</button>
+  </div>
+
+  <footer>
+    入力した内容は、この端末のブラウザの中だけに保存されます。外部には一切送信されません。<br>
+    © 合同会社ウルノワ ／ 無断での転載・再配布はご遠慮ください。
+  </footer>
+</div>
+
+<script>
+"use strict";
+// 個別相談の予約URL。空なら予約ボタンを出さない
+const CTA_URL = "";
+// 分類と項目: [名前, 控えめな削減割合, うまくいった場合の削減割合, 診断コメント]
+// 割合は試算用の仮定（検証済みの統計ではない）。0,0 は「AIでの置き換えを勧めない」項目
+const CATEGORIES = {
+  "家賃・地代": [["事務所・店舗の家賃"], ["駐車場"], ["倉庫・トランクルーム"], ["共益費・管理費"]],
+  "水道光熱費": [["電気代"], ["ガス代"], ["水道代"]],
+  "通信費": [["インターネット回線"], ["携帯電話"], ["固定電話・FAX"]],
+  "システム・SaaS利用料": [
+    ["会計ソフト", 0, 0, "税制・法令への対応が必要なため、専用サービスの継続をおすすめします。"],
+    ["予約システム", 0.2, 0.6, "予約台帳・リマインド・集計を自社用ツールにして、上位プランやオプションを外せる可能性があります。"],
+    ["顧客管理（CRM）", 0.5, 1, "自社の項目だけに絞った顧客管理ツールを内製し、置き換えられる可能性が高い領域です。"],
+    ["POSレジ", 0, 0, "決済・レシートが絡むため、専用サービスの継続をおすすめします。"],
+    ["ネットショップ・カート", 0, 0, "決済・セキュリティが絡むため、専用サービスの継続をおすすめします。"],
+    ["メール・LINE配信ツール", 0.2, 0.5, "配信文の作成・リスト抽出を自動化し、プランを下げられる可能性があります。"],
+    ["勤怠・給与ソフト", 0, 0, "法令への対応が必要なため、専用サービスの継続をおすすめします。"],
+    ["見積・請求書ソフト", 0.5, 1, "自社の書式に合わせた見積・請求ツールを内製し、置き換えられる可能性が高い領域です。"],
+    ["ホームページ・サーバー", 0.2, 0.5, "サーバー代は残りますが、制作・管理ツールの費用は見直せる可能性があります。"],
+    ["その他のシステム", 0.3, 0.8, "機能を一部しか使っていないシステムは、必要な機能だけを内製して置き換えられる可能性があります。"]],
+  "外注費": [
+    ["ホームページの更新", 0.5, 1, "文章の修正・お知らせの更新は、AIを使えば社内で完結しやすい作業です。"],
+    ["事務・入力の代行", 0.3, 0.8, "転記・集計・書類作成は自動化と相性が良く、外注量を減らせる可能性があります。"],
+    ["デザイン・制作物", 0.3, 0.7, "チラシ・バナー・資料のたたき台を社内で作り、外注は仕上げだけにできる可能性があります。"],
+    ["システムの保守", 0.2, 0.5, "軽微な修正や機能追加を社内で対応し、保守範囲を絞れる可能性があります。"],
+    ["税理士・社労士などの顧問料", 0, 0, "専門家の判断が必要な領域です。渡す資料づくりの手間はSTEP3の手作業として減らせます。"]],
+  "人件費": [["役員報酬"], ["給与（固定分）"], ["社会保険料"]],
+  "リース・ローン": [["複合機・コピー機"], ["車両"], ["設備・機器"], ["借入の返済"]],
+  "保険料": [["事業用の保険"], ["車両保険"]],
+  "広告宣伝費（固定）": [["ポータルサイト掲載料"], ["広告の運用費", 0.2, 0.5, "レポート作成・広告文の作成を内製し、運用代行の範囲を絞れる可能性があります。"]],
+  "その他": [["会費・組合費"], ["その他"]]
+};
+// 手作業の時間がどれくらい減るかの仮定
+const WORK_RATE = [0.3, 0.7];
+// 自由入力の行に「候補」チェックを付けたときの仮定（システム・外注・その他のみ）
+const FREE_RATE = [0.2, 0.5];
+const FREE_CATS = ["システム・SaaS利用料", "外注費", "その他"];
+const DEFAULT_AI_FEE = 3000;
+const INDUSTRIES = {
+  "（選択してください）": [],
+  "物販・EC・製造": [["家賃・地代", "倉庫・トランクルーム"], ["システム・SaaS利用料", "ネットショップ・カート"], ["システム・SaaS利用料", "会計ソフト"], ["外注費", "デザイン・制作物"], ["水道光熱費", "電気代"], ["通信費", "インターネット回線"]],
+  "教室・スクール・塾": [["家賃・地代", "事務所・店舗の家賃"], ["システム・SaaS利用料", "予約システム"], ["システム・SaaS利用料", "メール・LINE配信ツール"], ["広告宣伝費（固定）", "ポータルサイト掲載料"], ["水道光熱費", "電気代"], ["通信費", "インターネット回線"]],
+  "治療院（整体・鍼灸・接骨）": [["家賃・地代", "事務所・店舗の家賃"], ["システム・SaaS利用料", "予約システム"], ["システム・SaaS利用料", "顧客管理（CRM）"], ["広告宣伝費（固定）", "ポータルサイト掲載料"], ["水道光熱費", "電気代"], ["リース・ローン", "設備・機器"]],
+  "住宅・建築・リフォーム・不動産": [["家賃・地代", "事務所・店舗の家賃"], ["システム・SaaS利用料", "見積・請求書ソフト"], ["システム・SaaS利用料", "顧客管理（CRM）"], ["広告宣伝費（固定）", "ポータルサイト掲載料"], ["リース・ローン", "車両"], ["リース・ローン", "複合機・コピー機"]],
+  "コンサル・士業・BtoBサービス": [["家賃・地代", "事務所・店舗の家賃"], ["システム・SaaS利用料", "会計ソフト"], ["システム・SaaS利用料", "顧客管理（CRM）"], ["システム・SaaS利用料", "見積・請求書ソフト"], ["外注費", "事務・入力の代行"], ["通信費", "インターネット回線"]],
+  "癒し・セラピー・カウンセリング・占い": [["家賃・地代", "事務所・店舗の家賃"], ["システム・SaaS利用料", "予約システム"], ["システム・SaaS利用料", "メール・LINE配信ツール"], ["外注費", "ホームページの更新"], ["広告宣伝費（固定）", "ポータルサイト掲載料"], ["通信費", "携帯電話"]],
+  "その他の業種": [["家賃・地代", "事務所・店舗の家賃"], ["水道光熱費", "電気代"], ["通信費", "インターネット回線"], ["システム・SaaS利用料", "会計ソフト"]]
+};
+const STORE_KEY = "fixed-cost-checker-v1";
+const FREE = "（自由に入力）";
+
+let state = { industry: "（選択してください）", costs: [], works: [], aiFee: DEFAULT_AI_FEE, diagnosed: false };
+
+const findItem = (cat, item) => (CATEGORIES[cat] || []).find(([n]) => n === item);
+const isReview = (cat, item) => { const d = findItem(cat, item); return !!(d && d[2] > 0); };
+const num = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
+const yen = n => Math.round(n).toLocaleString("ja-JP");
+
+// 純粋関数: 集計
+function summarize(s) {
+  const byCat = {};
+  let costM = 0, revCostM = 0, workM = 0, hours = 0;
+  for (const c of s.costs) {
+    const m = c.cycle === "年" ? num(c.amount) / 12 : num(c.amount);
+    costM += m;
+    if (c.review) revCostM += m;
+    if (m > 0) byCat[c.cat] = (byCat[c.cat] || 0) + m;
+  }
+  for (const w of s.works) { workM += num(w.hours) * num(w.rate); hours += num(w.hours); }
+  if (workM > 0) byCat["手作業のコスト"] = workM;
+  return { costM, workM, hours, revM: revCostM + workM, byCat };
+}
+
+// 純粋関数: AI活用診断
+function diagnose(s) {
+  const items = [], keep = [];
+  let fixLo = 0, fixHi = 0;
+  for (const c of s.costs) {
+    const m = c.cycle === "年" ? num(c.amount) / 12 : num(c.amount);
+    if (!m) continue;
+    const d = findItem(c.cat, c.item);
+    // 置き換えを勧めない項目は、チェックの有無にかかわらず理由を伝える
+    if (d && d[3] && !(d[2] > 0)) { keep.push({ name: c.item, tip: d[3] }); continue; }
+    if (!c.review) continue;
+    let lo = 0, hi = 0, tip = "";
+    if (d) { lo = d[1] || 0; hi = d[2] || 0; tip = d[3] || ""; }
+    else if (FREE_CATS.includes(c.cat)) { [lo, hi] = FREE_RATE; tip = "内容を伺ったうえで、内製や自動化で置き換えられる範囲を確認します。"; }
+    const name = c.item === FREE ? c.cat : c.item;
+    if (hi <= 0) { keep.push({ name, tip: tip || "AIでの削減対象になりにくい項目です。" }); continue; }
+    fixLo += m * lo * 12; fixHi += m * hi * 12;
+    items.push({ name, lo: m * lo * 12, hi: m * hi * 12, tip });
+  }
+  let workLo = 0, workHi = 0, hours = 0;
+  for (const w of s.works) {
+    const m = num(w.hours) * num(w.rate);
+    if (!m) continue;
+    hours += num(w.hours);
+    workLo += m * WORK_RATE[0] * 12; workHi += m * WORK_RATE[1] * 12;
+    items.push({ name: (w.name || "手作業") + "（月" + num(w.hours) + "時間）", lo: m * WORK_RATE[0] * 12, hi: m * WORK_RATE[1] * 12,
+      tip: "くり返しの作業は自動化と相性が良い領域です。月" + Math.round(num(w.hours) * WORK_RATE[0]) + "〜" + Math.round(num(w.hours) * WORK_RATE[1]) + "時間が戻る見込みです。" });
+  }
+  const fee = num(s.aiFee) * 12;
+  const gross = fixHi + workHi;
+  const netLo = Math.max(0, fixLo + workLo - fee), netHi = Math.max(0, gross - fee);
+  let rank = "まずは、毎月くり返している手作業を書き出すところから";
+  if (netHi >= 1000000) rank = "伸びしろ：大 ― 優先して取り組む価値があります";
+  else if (netHi >= 300000) rank = "伸びしろ：中 ― 効果の大きい1〜2か所から";
+  else if (netHi > 0) rank = "伸びしろ：小 ― まず1か所で試すのがおすすめ";
+  items.sort((a, b) => b.hi - a.hi);
+  return { fixLo, fixHi, workLo, workHi, fee, netLo, netHi, rank, hoursLo: hours * WORK_RATE[0], hoursHi: hours * WORK_RATE[1], items, keep, empty: gross <= 0 };
+}
+const man = n => n >= 10000 ? (Math.round(n / 1000) / 10).toLocaleString("ja-JP") + "万" : yen(n);
+const range = (lo, hi) => man(lo) + "〜" + man(hi) + "円";
+
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (s && Array.isArray(s.costs) && Array.isArray(s.works)) state = Object.assign(state, s);
+  } catch (e) {}
+}
+
+function el(tag, props, children) {
+  const e = document.createElement(tag);
+  Object.assign(e, props || {});
+  (children || []).forEach(c => e.append(c));
+  return e;
+}
+function field(label, control) { return el("label", { className: "f" }, [el("span", { textContent: label }), control]); }
+function options(select, list, value) {
+  select.replaceChildren(...list.map(v => el("option", { value: v, textContent: v })));
+  select.value = list.includes(value) ? value : list[0];
+}
+
+function renderCosts() {
+  const box = document.getElementById("costRows");
+  box.replaceChildren(...state.costs.map((c, i) => {
+    const cat = el("select", { ariaLabel: "分類" });
+    options(cat, Object.keys(CATEGORIES), c.cat);
+    const itemWrap = el("div");
+    const names = CATEGORIES[c.cat].map(([n]) => n).concat(FREE);
+    const preset = names.includes(c.item) && c.item !== FREE;
+    const item = el("select", { ariaLabel: "項目" });
+    options(item, names, preset ? c.item : FREE);
+    itemWrap.append(item);
+    if (!preset) {
+      const free = el("input", { type: "text", placeholder: "項目名を入力", value: c.item === FREE ? "" : c.item, ariaLabel: "項目名" });
+      free.style.marginTop = "6px";
+      free.addEventListener("input", () => { c.item = free.value || FREE; save(); });
+      itemWrap.append(free);
+    }
+    const amount = el("input", { type: "number", min: "0", step: "100", inputMode: "numeric", placeholder: "0", value: c.amount || "", ariaLabel: "金額" });
+    const cycle = el("select", { ariaLabel: "支払い" });
+    options(cycle, ["月", "年"], c.cycle);
+    const chk = el("input", { type: "checkbox", checked: !!c.review });
+    const flag = el("label", { className: "flag" }, [chk, "候補"]);
+    const del = el("button", { type: "button", className: "del", textContent: "削除", ariaLabel: "この行を削除" });
+
+    cat.addEventListener("change", () => { c.cat = cat.value; c.item = CATEGORIES[c.cat][0][0]; c.review = isReview(c.cat, c.item); save(); renderCosts(); renderSummary(); });
+    item.addEventListener("change", () => { c.item = item.value; c.review = isReview(c.cat, c.item); save(); renderCosts(); renderSummary(); });
+    amount.addEventListener("input", () => { c.amount = amount.value; save(); renderSummary(); });
+    cycle.addEventListener("change", () => { c.cycle = cycle.value; save(); renderSummary(); });
+    chk.addEventListener("change", () => { c.review = chk.checked; save(); renderSummary(); });
+    del.addEventListener("click", () => { state.costs.splice(i, 1); save(); renderCosts(); renderSummary(); });
+    return el("div", { className: "row cost" }, [field("分類", cat), itemWrap, field("金額（円）", amount), field("支払い", cycle), flag, del]);
+  }));
+}
+
+function renderWorks() {
+  const box = document.getElementById("workRows");
+  box.replaceChildren(...state.works.map((w, i) => {
+    const name = el("input", { type: "text", placeholder: "例）請求書の作成と送付", value: w.name || "", ariaLabel: "作業の内容" });
+    const hours = el("input", { type: "number", min: "0", step: "0.5", inputMode: "decimal", placeholder: "0", value: w.hours || "", ariaLabel: "月の時間" });
+    const rate = el("input", { type: "number", min: "0", step: "100", inputMode: "numeric", value: w.rate || "", ariaLabel: "時給" });
+    const calc = el("div", { className: "calc", textContent: yen(num(w.hours) * num(w.rate)) + " 円" });
+    const del = el("button", { type: "button", className: "del", textContent: "削除", ariaLabel: "この行を削除" });
+    const upd = () => { calc.textContent = yen(num(w.hours) * num(w.rate)) + " 円"; save(); renderSummary(); };
+    name.addEventListener("input", () => { w.name = name.value; save(); });
+    hours.addEventListener("input", () => { w.hours = hours.value; upd(); });
+    rate.addEventListener("input", () => { w.rate = rate.value; upd(); });
+    del.addEventListener("click", () => { state.works.splice(i, 1); save(); renderWorks(); renderSummary(); });
+    return el("div", { className: "row work" }, [field("作業の内容", name), field("月の時間", hours), field("時給（円）", rate), calc, del]);
+  }));
+}
+
+function setStat(id, value, unit) {
+  document.getElementById(id).replaceChildren(yen(value), el("small", { textContent: unit }));
+}
+function renderSummary() {
+  renderDiag();
+  const r = summarize(state);
+  setStat("sCostM", r.costM, "円/月");
+  document.getElementById("sCostY").textContent = "年間 " + yen(r.costM * 12) + "円";
+  setStat("sWorkM", r.workM, "円/月");
+  document.getElementById("sWorkY").textContent = "年間 " + yen(r.workM * 12) + "円（月" + r.hours + "時間）";
+  setStat("sRevY", r.revM * 12, "円/年");
+  document.getElementById("sRevM").textContent = "月あたり " + yen(r.revM) + "円";
+  const entries = Object.entries(r.byCat).sort((a, b) => b[1] - a[1]);
+  const max = entries.length ? entries[0][1] : 0;
+  document.getElementById("bars").replaceChildren(...entries.map(([k, v]) => {
+    const fill = el("div", { className: "fill" });
+    fill.style.width = (max ? Math.max(2, v / max * 100) : 0) + "%";
+    if (k === "手作業のコスト") fill.style.background = "var(--accent)";
+    return el("div", { className: "bar" }, [el("div", { textContent: k }), el("div", { className: "track" }, [fill]), el("div", { className: "amt", textContent: yen(v) + " 円/月" })]);
+  }));
+}
+
+function renderDiag() {
+  document.getElementById("diagStart").hidden = !!state.diagnosed;
+  document.getElementById("diagResult").hidden = !state.diagnosed;
+  if (!state.diagnosed) return;
+  const d = diagnose(state);
+  document.getElementById("dNet").replaceChildren(d.empty ? "―" : range(d.netLo, d.netHi), el("small", { textContent: d.empty ? "" : " /年" }));
+  document.getElementById("dRank").textContent = d.empty ? "金額を入れると診断結果が出ます" : d.rank;
+  document.getElementById("dTime").textContent = d.hoursHi > 0 ? "戻ってくる時間の目安：月 " + Math.round(d.hoursLo) + "〜" + Math.round(d.hoursHi) + " 時間" : "";
+  const tr = (a, b, cls) => el("tr", { className: cls || "" }, [el("td", { textContent: a }), el("td", { textContent: b })]);
+  document.getElementById("dBreakdown").replaceChildren(
+    tr("システム・外注費の置き換え", range(d.fixLo, d.fixHi) + " /年"),
+    tr("手作業の自動化", range(d.workLo, d.workHi) + " /年"),
+    tr("AIの利用料", "− " + man(d.fee) + "円 /年"),
+    tr("差し引きの見込み", range(d.netLo, d.netHi) + " /年", "total"));
+  document.getElementById("dPrio").replaceChildren(...d.items.slice(0, 3).map(x => el("li", {}, [
+    el("div", {}, [el("span", { className: "t", textContent: x.name + "　" }), el("span", { className: "s", textContent: "年 " + range(x.lo, x.hi) })]),
+    el("div", { className: "d", textContent: x.tip })])));
+  const keep = document.getElementById("dKeep");
+  keep.replaceChildren(...(d.keep.length ? [el("strong", { textContent: "そのまま続けたほうがよい項目" })].concat(d.keep.map(k => el("div", { textContent: "・" + k.name + " ― " + k.tip }))) : []));
+}
+
+function newCost(cat, item) {
+  cat = cat || "家賃・地代"; item = item || CATEGORIES[cat][0][0];
+  return { cat, item, amount: "", cycle: "月", review: isReview(cat, item) };
+}
+function newWork() { return { name: "", hours: "", rate: "2000" }; }
+
+function init() {
+  load();
+  const ind = document.getElementById("industry");
+  options(ind, Object.keys(INDUSTRIES), state.industry);
+  ind.addEventListener("change", () => {
+    const hasInput = state.costs.some(c => num(c.amount) > 0);
+    if (hasInput && !confirm("入力済みの固定費を、選んだ業種の項目に入れ替えます。よろしいですか？")) { ind.value = state.industry; return; }
+    state.industry = ind.value;
+    state.costs = INDUSTRIES[ind.value].map(([c, i]) => newCost(c, i));
+    save(); renderCosts(); renderSummary();
+  });
+  document.getElementById("addCost").addEventListener("click", () => { state.costs.push(newCost()); save(); renderCosts(); });
+  document.getElementById("addWork").addEventListener("click", () => { state.works.push(newWork()); save(); renderWorks(); });
+  const fee = document.getElementById("aiFee");
+  fee.value = state.aiFee;
+  fee.addEventListener("input", () => { state.aiFee = fee.value; save(); renderDiag(); });
+  document.getElementById("runDiag").addEventListener("click", () => {
+    state.diagnosed = true; save(); renderDiag();
+    document.getElementById("diagCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  if (CTA_URL) { document.getElementById("cta").href = CTA_URL; document.getElementById("ctaBar").hidden = false; }
+  document.getElementById("print").addEventListener("click", () => window.print());
+  document.getElementById("reset").addEventListener("click", () => {
+    if (!confirm("入力した内容をすべて消します。よろしいですか？")) return;
+    state = { industry: "（選択してください）", costs: [], works: [newWork()], aiFee: DEFAULT_AI_FEE, diagnosed: false };
+    fee.value = state.aiFee;
+    save(); ind.value = state.industry; renderCosts(); renderWorks(); renderSummary();
+  });
+  if (!state.works.length) state.works.push(newWork());
+  renderCosts(); renderWorks(); renderSummary();
+}
+if (typeof document !== "undefined") init();
+if (typeof module !== "undefined") module.exports = { summarize, diagnose, isReview, CATEGORIES, INDUSTRIES };
+</script>
+</body>
+</html>
